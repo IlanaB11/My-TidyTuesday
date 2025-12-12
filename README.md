@@ -2,7 +2,7 @@
 Data exploration done using data from [tidytuesday](https://github.com/rfordatascience/tidytuesday)
 
 
-Orignally started for coursework for MATH250 at lake forest college
+Orignally started for coursework for course MATH250 at Lake Forest College
 
 ## Posted Project 
 
