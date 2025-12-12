@@ -1,0 +1,129 @@
+---
+title: "Billboard Top 100"
+author: "Ilana Berlin"
+format: html
+embed-resources: true
+code-fold: true
+date: Dec 9 2025
+---
+
+```{r}
+#| label: setup
+#| message: false
+
+library(tidyverse)
+library(gt)
+billboard <- read.csv("billboard.csv")
+```
+
+Artist's who write their own songs are often more popular. Audiences feel like they are more connected to the artist and artist feel they have more control over their work.^[[Songwriting in Pop Music](https://machronicle.com/the-era-of-songwriting-in-pop-music/)].How is this reflected in chart topping songs?
+
+Taylor Swift is a good example of an artist who gained popularity for writing her own songs. I am not the biggest Taylor Swift fan however I remember how often Shake It Off was played, and how before playing it radio hosts would like about how she wrote it about the media attention she was getting.^[[What is Shake It Off by Taylor Swift About](https://en.wikipedia.org/wiki/Shake_It_Off)]
+
+
+```{r}
+#| label: select data 
+
+billboard <- billboard %>% 
+  select(song, 
+         artist, 
+         date, 
+         weeks_at_number_one, 
+         songwriters, 
+         artist_is_a_songwriter, 
+         artist_is_only_songwriter
+         ) %>% 
+  mutate(date = as.numeric(substr(date, 1, 4)), 
+         artist_is_a_songwriter = as.logical(artist_is_a_songwriter), 
+         artist_is_only_songwriter = as.logical(artist_is_only_songwriter))
+```
+
+```{r}
+#| label: song histogram
+#| fig-alt: a histogram showing the number of songs that made it to the top of the billboard top 100 each year and if the artist was a songswriter 
+
+billboard %>% 
+  ggplot(aes(x = date, 
+             fill = artist_is_a_songwriter)) + 
+  geom_histogram(binwidth = 2) + 
+  theme_minimal() + 
+  scale_fill_brewer(palette = "Dark2") + 
+
+    labs(x = "Year", 
+       y = "Count", 
+       fill = " Artist is a Songwriter", 
+       title = "Top Song Written by Artist per Year") +
+  annotate(geom = "text", 
+           x = 2014, 
+           y = 62, 
+           label = "Shake It Off", 
+           xmin = 2005, 
+           xmax = 2015) + 
+  annotate(geom = "curve",
+           x = 2014, 
+           y = 60, 
+           xend = 2014, 
+           yend = 20, 
+           arrow = arrow())
+```
+A lot of songs that make the top of the billboard top 100 are written, at least in part, by their artist. The ratio of songs written by artist seems to have sharply increased after 1990, as the number of songs that made the top sharply decreased.
+
+```{r}
+#| label: writting trends 
+#| fig-alt: a scatter plot with a trend lines showing the different ways popular songs have been written
+#| warning: false
+
+billboard2 %>% 
+  summarize(year, 
+            songwriter = case_when(
+              artist_is_only_songwriter & artist_is_only_songwriter ~ "Written by Just the Artist", 
+              artist_is_a_songwriter & !artist_is_only_songwriter ~ "Cowritten with Artist", 
+              .default = "Not Written by Artist"
+            )) %>% 
+  group_by(year, 
+           songwriter) %>% 
+  summarise(count = n()) %>%
+  ungroup() %>% 
+  ggplot(aes(x = year, 
+             y = count, 
+             color = songwriter)) + 
+  geom_point(alpha = 0.5) + 
+  geom_smooth(se = FALSE, 
+             linewidth = 1.5) + 
+  theme_minimal() + 
+  scale_color_brewer(palette = "Dark2") + 
+  labs(title = "Who Writes the Top Songs?", 
+       x = "Year", 
+       y = "Number of Songs", 
+       color = "Writers") + 
+  annotate(geom = "text", 
+           x = 2014, 
+           y = 18, 
+           label = "Shake It Off", 
+           xmin = 2003, 
+           xmax = 2015) + 
+  annotate(geom = "curve",
+           x = 2014, 
+           y = 17, 
+           xend = 2014, 
+           yend = 10.5, 
+           arrow = arrow())
+```
+Over the years, more artist have been listing themselves as writers for their songs, but the number of top songs _only_ written by the artist has decreased. I find this incredibly interesting and am curious about the cause. Two immediate things come to mind. One is that the music industry realized that audiences prefer when artist write their own songs and started listing them as artist no matter hoe much or how little they contributed to the creative process. That people who were helping write the songs were not getting credit for their writing before and started receiving credit. Drawing any conclusions requires a lot of further investigation. 
+
+Despite have many popular songs that she wrote herself^[[Songs Written By Taylro Swift](https://www.businessinsider.com/taylor-swift-solo-written-songs)], all of Taylor Swift's chart topping songs where cowritten. 
+
+```{r}
+#| label: taylor swift
+billboard2 %>% 
+  filter(artist == "Taylor Swift") %>% 
+  select(Year = year, 
+         Song = song, 
+         Writers = songwriters, 
+         "Weeks at the Top" = weeks_at_number_one) %>% 
+  gt() %>% 
+  tab_header(title = "Taylor Swift Chart Topping Songs", 
+             subtitle = "All are made in collaborative with other writers")
+```
+
+I think this show collaborative the process or making music can be, that an artist's most popular songs where made with other people. 
